@@ -1,13 +1,10 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-
-import '../../../../core/network/api_client.dart';
-
-import '../model/producto.dart';
-
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../model/producto.dart';
 import '../model/producto_request.dart';
 
 class ProductosApi {
@@ -17,11 +14,11 @@ class ProductosApi {
 
   Future<List<Producto>> listarEmpresa(String empresaId) async {
     final response = await apiClient.client.get(
-      "/productos/empresa/$empresaId",
+      "/productos",
+      queryParameters: {"empresaId": empresaId},
     );
 
     final List data = response.data;
-
     return data
         .map((json) => Producto.fromJson(Map<String, dynamic>.from(json)))
         .toList();
@@ -29,7 +26,6 @@ class ProductosApi {
 
   Future<Producto> buscar(String id) async {
     final response = await apiClient.client.get("/productos/$id");
-
     return Producto.fromJson(Map<String, dynamic>.from(response.data));
   }
 
@@ -38,7 +34,6 @@ class ProductosApi {
       "/productos",
       data: request.toJson(),
     );
-
     return Producto.fromJson(Map<String, dynamic>.from(response.data));
   }
 
@@ -47,7 +42,6 @@ class ProductosApi {
       "/productos/$id",
       data: request.toJson(),
     );
-
     return Producto.fromJson(Map<String, dynamic>.from(response.data));
   }
 

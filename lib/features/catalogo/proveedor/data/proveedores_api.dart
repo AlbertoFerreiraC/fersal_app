@@ -1,5 +1,4 @@
 import '../../../../core/network/api_client.dart';
-
 import '../model/proveedor.dart';
 import '../model/proveedor_request.dart';
 
@@ -10,11 +9,11 @@ class ProveedoresApi {
 
   Future<List<Proveedor>> listarEmpresa(String empresaId) async {
     final response = await apiClient.client.get(
-      "/proveedores/empresa/$empresaId",
+      "/proveedores",
+      queryParameters: {"empresaId": empresaId},
     );
 
     final List data = response.data;
-
     return data.map((json) => Proveedor.fromJson(json)).toList();
   }
 
@@ -23,7 +22,6 @@ class ProveedoresApi {
       "/proveedores",
       data: request.toJson(),
     );
-
     return Proveedor.fromJson(response.data);
   }
 
@@ -32,7 +30,6 @@ class ProveedoresApi {
       "/proveedores/$id",
       data: request.toJson(),
     );
-
     return Proveedor.fromJson(response.data);
   }
 

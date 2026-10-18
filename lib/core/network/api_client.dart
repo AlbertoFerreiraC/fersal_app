@@ -1,25 +1,30 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../storage/token_storage.dart';
 import 'api_constants.dart';
 
 class ApiClient {
   final TokenStorage storage;
-
   late Dio dio;
 
   ApiClient({required this.storage}) {
     dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        headers: {"Content-Type": "application/json"},
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
       ),
     );
 
     // ============================================================
     // INTERCEPTOR DE AUTENTICACIÓN
     // ============================================================
-
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -31,34 +36,34 @@ class ApiClient {
 
           handler.next(options);
         },
-
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
+            debugPrint("SESIÓN EXPIRADA (401) -> Cerrando sesión local");
             await storage.logout();
           }
-
           handler.next(error);
         },
       ),
     );
 
     // ============================================================
-    // LOG DE DIO
+    // LOG DE DIO (Solo activo en modo debug para evitar lag)
     // ============================================================
-
-    dio.interceptors.add(
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: false,
-        responseBody: true,
-        error: true,
-        logPrint: (object) {
-          print(object);
-        },
-      ),
-    );
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          request: true,
+          requestHeader: false,
+          requestBody: true,
+          responseHeader: false,
+          responseBody: true,
+          error: true,
+          logPrint: (object) {
+            debugPrint("[HTTP] $object");
+          },
+        ),
+      );
+    }
   }
 
   Dio get client => dio;

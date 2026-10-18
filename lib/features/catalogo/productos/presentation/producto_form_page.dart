@@ -24,9 +24,8 @@ class ProductoFormPage extends StatefulWidget {
 
   bool get editando => producto != null;
 
-  /// Método estático para invocar el formulario como un Popup (Bottom Sheet)
-  static Future<Producto?> mostrar(BuildContext context, {Producto? producto}) {
-    return showModalBottomSheet<Producto>(
+  static Future<bool?> mostrar(BuildContext context, {Producto? producto}) {
+    return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -81,10 +80,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
     super.dispose();
   }
 
-  // ============================================================
-  // CARGAR DATOS
-  // ============================================================
-
   Future<void> cargarDatos() async {
     try {
       final empresaId = await storage.getEmpresaId();
@@ -133,36 +128,27 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
     }
   }
 
-  // ============================================================
-  // CARGAR PRODUCTO PARA EDICION
-  // ============================================================
-
   void cargarProducto() {
     final producto = widget.producto;
-
-    if (producto == null) {
-      return;
-    }
+    if (producto == null) return;
 
     nombreController.text = producto.nombre;
     codigoController.text = producto.codigo;
     descripcionController.text = producto.descripcion ?? "";
-    precioCompraController.text = producto.precioCompra?.toString() ?? "";
-    precioVentaController.text = producto.precioVenta?.toString() ?? "";
+    precioCompraController.text = producto.precioCompra != null
+        ? producto.precioCompra!.toInt().toString()
+        : "";
+    precioVentaController.text = producto.precioVenta != null
+        ? producto.precioVenta!.toInt().toString()
+        : "";
     stockMinimoController.text = producto.stockMinimo?.toString() ?? "";
 
     categoriaSeleccionada = producto.categoriaId;
     proveedorSeleccionado = producto.proveedorId;
     imagenActual = producto.imagenUrl;
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
-
-  // ============================================================
-  // IMAGEN
-  // ============================================================
 
   Future<void> seleccionarImagen(ImageSource source) async {
     try {
@@ -173,10 +159,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
         maxHeight: 1600,
       );
 
-      if (imagen == null) {
-        return;
-      }
-
+      if (imagen == null) return;
       if (!mounted) return;
 
       setState(() {
@@ -184,7 +167,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       });
     } catch (e) {
       debugPrint("ERROR SELECCIONANDO IMAGEN: $e");
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -293,10 +275,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
     );
   }
 
-  // ============================================================
-  // QUITAR IMAGEN
-  // ============================================================
-
   Future<void> quitarImagen() async {
     if (imagenSeleccionada != null) {
       setState(() {
@@ -305,9 +283,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       return;
     }
 
-    if (imagenActual == null || imagenActual!.isEmpty) {
-      return;
-    }
+    if (imagenActual == null || imagenActual!.isEmpty) return;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -328,15 +304,11 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
+              onPressed: () => Navigator.pop(context, false),
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
+              onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
@@ -348,9 +320,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       },
     );
 
-    if (confirmar != true) {
-      return;
-    }
+    if (confirmar != true) return;
 
     try {
       setState(() {
@@ -375,7 +345,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       );
     } catch (e) {
       debugPrint("ERROR ELIMINANDO IMAGEN: $e");
-
       if (!mounted) return;
 
       setState(() {
@@ -390,10 +359,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       );
     }
   }
-
-  // ============================================================
-  // GUARDAR
-  // ============================================================
 
   Future<void> guardar() async {
     final nombre = nombreController.text.trim();
@@ -450,12 +415,12 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       }
 
       if (imagenSeleccionada != null) {
-        producto = await api.subirImagen(producto.id, imagenSeleccionada!);
+        await api.subirImagen(producto.id, imagenSeleccionada!);
       }
 
       if (!mounted) return;
 
-      Navigator.pop(context, producto);
+      Navigator.pop(context, true);
     } catch (e) {
       debugPrint("ERROR GUARDANDO PRODUCTO: $e");
 
@@ -478,11 +443,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
 
   double? _parseDouble(String value) {
     final texto = value.trim().replaceAll(".", "").replaceAll(",", ".");
-
-    if (texto.isEmpty) {
-      return null;
-    }
-
+    if (texto.isEmpty) return null;
     return double.tryParse(texto);
   }
 
@@ -491,10 +452,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       SnackBar(content: Text(mensaje), behavior: SnackBarBehavior.floating),
     );
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -525,8 +482,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 12),
-
-          // Indicador superior (Pill)
           Container(
             width: 40,
             height: 4,
@@ -535,10 +490,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -578,10 +530,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
               ],
             ),
           ),
-
           const Divider(height: 1),
-
-          // Formulario
           loadingDatos
               ? const Padding(
                   padding: EdgeInsets.symmetric(vertical: 60),
@@ -598,9 +547,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           Icons.info_outline_rounded,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 12),
-
                         _campo(
                           controller: nombreController,
                           label: "Nombre del producto",
@@ -612,9 +559,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textSecondary: textSecondary,
                           obligatorio: true,
                         ),
-
                         const SizedBox(height: 12),
-
                         _campo(
                           controller: codigoController,
                           label: "Código de producto",
@@ -626,9 +571,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textSecondary: textSecondary,
                           obligatorio: true,
                         ),
-
                         const SizedBox(height: 12),
-
                         _campo(
                           controller: descripcionController,
                           label: "Descripción",
@@ -640,17 +583,13 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textPrimary: textPrimary,
                           textSecondary: textSecondary,
                         ),
-
                         const SizedBox(height: 20),
-
                         _tituloSeccion(
                           "Clasificación",
                           Icons.category_outlined,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 12),
-
                         _categoriaDropdown(
                           inputBg,
                           borderColor,
@@ -658,9 +597,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textSecondary,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 12),
-
                         _proveedorDropdown(
                           inputBg,
                           borderColor,
@@ -668,17 +605,13 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textSecondary,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 20),
-
                         _tituloSeccion(
                           "Precios",
                           Icons.payments_outlined,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 12),
-
                         Row(
                           children: [
                             Expanded(
@@ -716,17 +649,13 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 20),
-
                         _tituloSeccion(
                           "Inventario",
                           Icons.warehouse_outlined,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 12),
-
                         _campo(
                           controller: stockMinimoController,
                           label: "Stock mínimo",
@@ -738,17 +667,13 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textPrimary: textPrimary,
                           textSecondary: textSecondary,
                         ),
-
                         const SizedBox(height: 20),
-
                         _tituloSeccion(
                           "Imagen del producto",
                           Icons.image_outlined,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 12),
-
                         _imagenSelector(
                           inputBg,
                           borderColor,
@@ -756,10 +681,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                           textSecondary,
                           primaryBlue,
                         ),
-
                         const SizedBox(height: 24),
-
-                        // Botones de acción
                         Row(
                           children: [
                             Expanded(
@@ -828,10 +750,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
     );
   }
 
-  // ============================================================
-  // IMAGEN SELECTOR
-  // ============================================================
-
   Widget _imagenSelector(
     Color inputBg,
     Color borderColor,
@@ -870,14 +788,9 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
                 width: double.infinity,
                 height: 180,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
-                  return _imagenPlaceholder(primaryBlue);
-                },
+                errorBuilder: (_, __, ___) => _imagenPlaceholder(primaryBlue),
                 loadingBuilder: (context, child, progress) {
-                  if (progress == null) {
-                    return child;
-                  }
-
+                  if (progress == null) return child;
                   return Container(
                     width: double.infinity,
                     height: 180,
@@ -894,9 +807,7 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
             )
           else
             _imagenPlaceholder(primaryBlue),
-
           const SizedBox(height: 12),
-
           Row(
             children: [
               Expanded(
@@ -988,26 +899,13 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
   }
 
   String _resolverImagenUrl(String url) {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
     String baseUrl = ApiClient(storage: storage).dio.options.baseUrl;
-
-    if (baseUrl.endsWith("/api")) {
+    if (baseUrl.endsWith("/api"))
       baseUrl = baseUrl.substring(0, baseUrl.length - 4);
-    }
-
-    if (url.startsWith("/")) {
-      return "$baseUrl$url";
-    }
-
+    if (url.startsWith("/")) return "$baseUrl$url";
     return "$baseUrl/$url";
   }
-
-  // ============================================================
-  // TITULO SECCIÓN
-  // ============================================================
 
   Widget _tituloSeccion(String texto, IconData icon, Color primaryBlue) {
     return Row(
@@ -1025,10 +923,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       ],
     );
   }
-
-  // ============================================================
-  // CAMPO
-  // ============================================================
 
   Widget _campo({
     required TextEditingController controller,
@@ -1065,9 +959,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
             controller: controller,
             maxLines: maxLines,
             keyboardType: keyboardType,
-            inputFormatters: keyboardType == TextInputType.number
-                ? [FilteringTextInputFormatter.digitsOnly]
-                : null,
             style: TextStyle(fontSize: 13, color: textPrimary),
             decoration: InputDecoration(
               hintText: hint,
@@ -1084,10 +975,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       ],
     );
   }
-
-  // ============================================================
-  // CATEGORIA DROPDOWN
-  // ============================================================
 
   Widget _categoriaDropdown(
     Color inputBg,
@@ -1156,10 +1043,6 @@ class _ProductoFormPageState extends State<ProductoFormPage> {
       ],
     );
   }
-
-  // ============================================================
-  // PROVEEDOR DROPDOWN
-  // ============================================================
 
   Widget _proveedorDropdown(
     Color inputBg,

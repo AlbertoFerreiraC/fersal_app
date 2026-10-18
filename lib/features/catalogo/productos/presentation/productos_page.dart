@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -36,10 +37,6 @@ class _ProductosPageState extends State<ProductosPage> {
     super.dispose();
   }
 
-  // ============================================================
-  // CARGAR PRODUCTOS
-  // ============================================================
-
   Future<void> cargarProductos() async {
     if (mounted) {
       setState(() {
@@ -51,16 +48,15 @@ class _ProductosPageState extends State<ProductosPage> {
 
     if (empresaId == null || empresaId.isEmpty) {
       if (!mounted) return;
-
       setState(() {
         loading = false;
       });
-
       return;
     }
 
     try {
-      final api = ProductosApi(ApiClient(storage: storage));
+      final apiClient = ApiClient(storage: storage);
+      final api = ProductosApi(apiClient);
       final resultado = await api.listarEmpresa(empresaId);
 
       if (!mounted) return;
@@ -69,9 +65,8 @@ class _ProductosPageState extends State<ProductosPage> {
         productos = resultado;
         loading = false;
       });
-    } catch (e) {
-      debugPrint("ERROR CARGANDO PRODUCTOS: $e");
-
+    } on DioException catch (e) {
+      debugPrint("ERROR DIO PRODUCTOS: ${e.message}");
       if (!mounted) return;
 
       setState(() {
@@ -79,25 +74,30 @@ class _ProductosPageState extends State<ProductosPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("No se pudieron cargar los productos"),
-          behavior: SnackBarBehavior.floating,
+        SnackBar(
+          content: Text(
+            "Error ${e.response?.statusCode ?? ''}: No se pudieron cargar productos",
+          ),
         ),
+      );
+    } catch (e) {
+      debugPrint("ERROR GENERAL PRODUCTOS: $e");
+      if (!mounted) return;
+
+      setState(() {
+        loading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No se pudieron cargar los productos")),
       );
     }
   }
 
-  // ============================================================
-  // BÚSQUEDA
-  // ============================================================
-
   List<Producto> get productosFiltrados {
-    if (busqueda.trim().isEmpty) {
-      return productos;
-    }
+    if (busqueda.trim().isEmpty) return productos;
 
     final texto = busqueda.toLowerCase().trim();
-
     return productos.where((producto) {
       return producto.nombre.toLowerCase().contains(texto) ||
           producto.codigo.toLowerCase().contains(texto) ||
@@ -105,10 +105,6 @@ class _ProductosPageState extends State<ProductosPage> {
           (producto.proveedorNombre ?? "").toLowerCase().contains(texto);
     }).toList();
   }
-
-  // ============================================================
-  // ELIMINAR
-  // ============================================================
 
   Future<void> eliminarProducto(Producto producto) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -136,15 +132,11 @@ class _ProductosPageState extends State<ProductosPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
+              onPressed: () => Navigator.pop(context, false),
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
+              onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
@@ -160,13 +152,10 @@ class _ProductosPageState extends State<ProductosPage> {
       },
     );
 
-    if (confirmar != true) {
-      return;
-    }
+    if (confirmar != true) return;
 
     try {
       final api = ProductosApi(ApiClient(storage: storage));
-
       await api.eliminar(producto.id);
 
       if (!mounted) return;
@@ -183,7 +172,6 @@ class _ProductosPageState extends State<ProductosPage> {
       );
     } catch (e) {
       debugPrint("ERROR ELIMINANDO PRODUCTO: $e");
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -195,13 +183,8 @@ class _ProductosPageState extends State<ProductosPage> {
     }
   }
 
-  // ============================================================
-  // EDITAR Y NUEVO
-  // ============================================================
-
   Future<void> editarProducto(Producto producto) async {
     final result = await ProductoFormPage.mostrar(context, producto: producto);
-
     if (result == true) {
       await cargarProductos();
     }
@@ -209,46 +192,25 @@ class _ProductosPageState extends State<ProductosPage> {
 
   Future<void> nuevoProducto() async {
     final result = await ProductoFormPage.mostrar(context);
-
     if (result == true) {
       await cargarProductos();
     }
   }
 
-  // ============================================================
-  // HELPERS DE FORMATO
-  // ============================================================
-
   String precio(double? valor) {
-    if (valor == null) {
-      return "Gs. 0";
-    }
-
+    if (valor == null) return "Gs. 0";
     final numero = valor.toInt();
     return "Gs. ${numero.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)}.')}";
   }
 
   String resolverImagenUrl(String url) {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
     String baseUrl = ApiClient(storage: storage).dio.options.baseUrl;
-
-    if (baseUrl.endsWith("/api")) {
+    if (baseUrl.endsWith("/api"))
       baseUrl = baseUrl.substring(0, baseUrl.length - 4);
-    }
-
-    if (url.startsWith("/")) {
-      return "$baseUrl$url";
-    }
-
+    if (url.startsWith("/")) return "$baseUrl$url";
     return "$baseUrl/$url";
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +255,6 @@ class _ProductosPageState extends State<ProductosPage> {
       ),
       body: Stack(
         children: [
-          // Fondo azul superior
           Container(
             height: 180,
             width: double.infinity,
@@ -307,14 +268,10 @@ class _ProductosPageState extends State<ProductosPage> {
               ),
             ),
           ),
-
           SafeArea(
             child: Column(
               children: [
-                // AppBar Superior
                 _buildAppBar(context),
-
-                // Contenedor principal curvado
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -334,7 +291,6 @@ class _ProductosPageState extends State<ProductosPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Card de resumen
                             _buildSummaryCard(
                               isDark,
                               cardBg,
@@ -342,15 +298,9 @@ class _ProductosPageState extends State<ProductosPage> {
                               textSecondary,
                               primaryBlue,
                             ),
-
                             const SizedBox(height: 14),
-
-                            // Campo de Búsqueda
                             _buildSearchBox(isDark, cardBg, textSecondary),
-
                             const SizedBox(height: 16),
-
-                            // Contenido Principal
                             loading
                                 ? const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 40),
@@ -395,19 +345,13 @@ class _ProductosPageState extends State<ProductosPage> {
     );
   }
 
-  // ============================================================
-  // APP BAR SUPERIOR
-  // ============================================================
-
   Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
           IconButton(
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
+            onPressed: () => Scaffold.of(context).openDrawer(),
             icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
           ),
           IconButton(
@@ -436,22 +380,10 @@ class _ProductosPageState extends State<ProductosPage> {
               size: 24,
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.more_vert_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
         ],
       ),
     );
   }
-
-  // ============================================================
-  // CARD DE RESUMEN
-  // ============================================================
 
   Widget _buildSummaryCard(
     bool isDark,
@@ -517,10 +449,6 @@ class _ProductosPageState extends State<ProductosPage> {
     );
   }
 
-  // ============================================================
-  // BUSCADOR
-  // ============================================================
-
   Widget _buildSearchBox(bool isDark, Color cardBg, Color textSecondary) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -533,11 +461,7 @@ class _ProductosPageState extends State<ProductosPage> {
       ),
       child: TextField(
         controller: searchController,
-        onChanged: (value) {
-          setState(() {
-            busqueda = value;
-          });
-        },
+        onChanged: (value) => setState(() => busqueda = value),
         style: TextStyle(
           fontSize: 14,
           color: isDark ? Colors.white : Colors.black87,
@@ -551,9 +475,7 @@ class _ProductosPageState extends State<ProductosPage> {
               ? IconButton(
                   onPressed: () {
                     searchController.clear();
-                    setState(() {
-                      busqueda = "";
-                    });
+                    setState(() => busqueda = "");
                   },
                   icon: Icon(
                     Icons.close_rounded,
@@ -566,10 +488,6 @@ class _ProductosPageState extends State<ProductosPage> {
       ),
     );
   }
-
-  // ============================================================
-  // ITEM PRODUCTO
-  // ============================================================
 
   Widget _productoItem({
     required Producto producto,
@@ -587,12 +505,10 @@ class _ProductosPageState extends State<ProductosPage> {
           await eliminarProducto(producto);
           return false;
         }
-
         if (direction == DismissDirection.startToEnd) {
           await editarProducto(producto);
           return false;
         }
-
         return false;
       },
       background: Container(
@@ -805,10 +721,6 @@ class _ProductosPageState extends State<ProductosPage> {
     );
   }
 
-  // ============================================================
-  // IMAGEN PRODUCTO
-  // ============================================================
-
   Widget _imagenProducto(Producto producto, bool isDark, Color primaryBlue) {
     if (producto.imagenUrl != null && producto.imagenUrl!.isNotEmpty) {
       final url = resolverImagenUrl(producto.imagenUrl!);
@@ -820,14 +732,9 @@ class _ProductosPageState extends State<ProductosPage> {
           width: 60,
           height: 60,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) {
-            return _placeholderImagen(isDark, primaryBlue);
-          },
+          errorBuilder: (_, __, ___) => _placeholderImagen(isDark, primaryBlue),
           loadingBuilder: (context, child, progress) {
-            if (progress == null) {
-              return child;
-            }
-
+            if (progress == null) return child;
             return Container(
               width: 60,
               height: 60,
@@ -852,7 +759,6 @@ class _ProductosPageState extends State<ProductosPage> {
         ),
       );
     }
-
     return _placeholderImagen(isDark, primaryBlue);
   }
 
@@ -867,10 +773,6 @@ class _ProductosPageState extends State<ProductosPage> {
       child: Icon(Icons.inventory_2_rounded, color: primaryBlue, size: 26),
     );
   }
-
-  // ============================================================
-  // TAG
-  // ============================================================
 
   Widget _tag(String texto, Color color, bool isDark) {
     return Container(
@@ -892,10 +794,6 @@ class _ProductosPageState extends State<ProductosPage> {
       ),
     );
   }
-
-  // ============================================================
-  // EMPTY STATE
-  // ============================================================
 
   Widget _emptyState(
     Color textPrimary,

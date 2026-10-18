@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "733746011180",
+    "project_id": "fersal-app",
+    "storage_bucket": "fersal-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733746011180:android:515a3f97ba51b447ed8589",
+        "android_client_info": {
+          "package_name": "com.example.fersal_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhF1jNvbBgTz3IuSugudxIP9K1NCcCCzg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,9 +4,17 @@ import '../../app/app.dart';
 import '../../core/storage/token_storage.dart';
 import '../../features/auth/presentation/login_page.dart';
 import '../../core/security/biometric_service.dart';
+
 import '../../features/catalogo/categoria/presentation/categorias_page.dart';
 import '../../features/catalogo/proveedor/presentation/proveedores_page.dart';
 import '../../features/catalogo/productos/presentation/productos_page.dart';
+import '../../features/inventario/presentation/stocks_page.dart';
+import '../../features/sucursal/presentation/sucursales_page.dart';
+import '../../features/inventario/presentation/movimientos/movimientos_page.dart';
+import '../../features/clientes/presentation/clientes_page.dart';
+import '../../features/cuentas_corrientes/presentation/cuentas_page.dart';
+import '../../features/ventas/presentation/nueva_venta_page.dart';
+import '../../features/caja/presentation/caja_page.dart';
 
 class FersalDrawer extends StatefulWidget {
   const FersalDrawer({super.key});
@@ -20,12 +28,12 @@ enum ThemeOption { light, dark, system }
 class _FersalDrawerState extends State<FersalDrawer> {
   final storage = TokenStorage();
 
-  String nombre = "Alberto Ferreira";
-  String email = "admin@fersal.com";
+  String nombre = "";
+  String email = "";
+  String empresa = "";
+  String sucursal = "";
   bool biometric = false;
   int _selectedIndex = 0;
-
-  // Opción por defecto
   ThemeOption _selectedTheme = ThemeOption.system;
 
   @override
@@ -33,7 +41,6 @@ class _FersalDrawerState extends State<FersalDrawer> {
     super.initState();
     cargarDatos();
 
-    // Sincronizar el estado inicial con el estado global de la app
     if (themeNotifier.value == ThemeMode.light) {
       _selectedTheme = ThemeOption.light;
     } else if (themeNotifier.value == ThemeMode.dark) {
@@ -46,13 +53,17 @@ class _FersalDrawerState extends State<FersalDrawer> {
   Future<void> cargarDatos() async {
     final name = await storage.getName();
     final mail = await storage.getEmail();
+    final empresaNombre = await storage.getEmpresaNombre();
+    final sucursalNombre = await storage.getSucursalNombre();
     final bio = await storage.getBiometric();
 
     if (!mounted) return;
 
     setState(() {
-      nombre = name ?? "Alberto Ferreira";
-      email = mail ?? "admin@fersal.com";
+      nombre = name ?? "";
+      email = mail ?? "";
+      empresa = empresaNombre ?? "";
+      sucursal = sucursalNombre ?? "";
       biometric = bio;
     });
   }
@@ -76,12 +87,15 @@ class _FersalDrawerState extends State<FersalDrawer> {
     final primaryBlue = isDark
         ? const Color(0xFF3B82F6)
         : const Color(0xFF1B62D4);
+
     final headerGradientStart = isDark
         ? const Color(0xFF1E3A8A)
         : const Color(0xFF246BFD);
+
     final headerGradientEnd = isDark
         ? const Color(0xFF0F172A)
         : const Color(0xFF1B62D4);
+
     final contentBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textPrimary = isDark ? Colors.white : const Color(0xFF1E293B);
     final textSecondary = isDark
@@ -92,13 +106,12 @@ class _FersalDrawerState extends State<FersalDrawer> {
         : const Color(0xFFF1F5F9);
 
     return Drawer(
-      backgroundColor: isDark
-          ? const Color(0xFF0F172A)
-          : const Color(0xFF1B62D4),
-      elevation: 0,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: Column(
         children: [
-          // 1. HEADER AZUL
+          // ==========================
+          // HEADER
+          // ==========================
           Container(
             padding: const EdgeInsets.fromLTRB(20, 52, 20, 24),
             width: double.infinity,
@@ -114,34 +127,23 @@ class _FersalDrawerState extends State<FersalDrawer> {
                 Container(
                   height: 58,
                   width: 58,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.storefront_rounded,
-                      color: Color(0xFF1B62D4),
-                      size: 32,
-                    ),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    color: Color(0xFF1B62D4),
+                    size: 32,
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        nombre,
-                        maxLines: 1,
+                        nombre.isEmpty ? "Usuario" : nombre,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
@@ -149,46 +151,33 @@ class _FersalDrawerState extends State<FersalDrawer> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 2),
                       Text(
-                        email.isNotEmpty ? email : "Mi Negocio",
-                        maxLines: 1,
+                        email,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.workspace_premium_rounded,
-                              color: Color(0xFFFFC107),
-                              size: 13,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              "Plan Pro",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text(
+                        empresa,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (sucursal.isNotEmpty)
+                        Text(
+                          sucursal,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -196,290 +185,334 @@ class _FersalDrawerState extends State<FersalDrawer> {
             ),
           ),
 
-          // 2. CUERPO SCROLLEABLE
+          // ==========================
+          // MODULOS SCROLL
+          // ==========================
           Expanded(
             child: Container(
-              decoration: BoxDecoration(
-                color: contentBg,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
+              color: contentBg,
+              child: ListView(
+                padding: const EdgeInsets.all(14),
+                children: [
+                  _buildMenuItem(
+                    index: 0,
+                    icon: Icons.home_rounded,
+                    title: "Inicio",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 1,
+                    icon: Icons.shopping_bag_rounded,
+                    title: "Nueva venta",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NuevaVentaPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 2,
+                    icon: Icons.point_of_sale_rounded,
+                    title: "Caja",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CajaPage()),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 3,
+                    icon: Icons.inventory_2_rounded,
+                    title: "Productos",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProductosPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 4,
+                    icon: Icons.category_rounded,
+                    title: "Categorías",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CategoriasPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 5,
+                    icon: Icons.people_alt_rounded,
+                    title: "Clientes",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ClientesPage()),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 6,
+                    icon: Icons.people,
+                    title: "Proveedores",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProveedoresPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 7,
+                    icon: Icons.warehouse,
+                    title: "Stock",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StocksPage()),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 8,
+                    icon: Icons.store,
+                    title: "Sucursales",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SucursalesPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 9,
+                    icon: Icons.compare_arrows_rounded,
+                    title: "Movimientos Stock",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MovimientosPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    index: 10,
+                    icon: Icons.account_balance_wallet,
+                    title: "Cuentas corrientes",
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CuentasPage()),
+                      );
+                    },
+                  ),
+                ],
               ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 16,
-                        ),
-                        children: [
-                          _buildMenuItem(
-                            index: 0,
-                            icon: Icons.home_rounded,
-                            title: "Inicio",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            showChevron: false,
-                            onTap: () {
-                              setState(() => _selectedIndex = 0);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _buildMenuItem(
-                            index: 1,
-                            icon: Icons.shopping_bag_rounded,
-                            title: "Nueva venta",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onTap: () {
-                              setState(() => _selectedIndex = 1);
-                            },
-                          ),
-                          _buildMenuItem(
-                            index: 2,
-                            icon: Icons.inventory_2_rounded,
-                            title: "Productos",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onTap: () {
-                              setState(() => _selectedIndex = 6);
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ProductosPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildMenuItem(
-                            index: 3,
-                            icon: Icons.category_rounded,
-                            title: "Categorías",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onTap: () {
-                              setState(() => _selectedIndex = 3);
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const CategoriasPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildMenuItem(
-                            index: 4,
-                            icon: Icons.people_alt_rounded,
-                            title: "Clientes",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onTap: () {
-                              setState(() => _selectedIndex = 4);
-                            },
-                          ),
-                          _buildMenuItem(
-                            index: 5,
-                            icon: Icons.bar_chart_rounded,
-                            title: "Reportes",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onTap: () {
-                              setState(() => _selectedIndex = 5);
-                            },
-                          ),
-                          _buildMenuItem(
-                            index: 6,
-                            icon: Icons.category_rounded,
-                            title: "Proveedor",
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onTap: () {
-                              setState(() => _selectedIndex = 6);
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ProveedoresPage(),
-                                ),
-                              );
-                            },
-                          ),
-                        
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Divider(color: dividerColor, thickness: 1),
-                          ),
+            ),
+          ),
 
-                          // BIOMETRÍA
-                          _buildSwitchTile(
-                            icon: Icons.fingerprint_rounded,
-                            title: "Acceso biométrico",
-                            subtitle: biometric ? "Activado" : "Desactivado",
-                            value: biometric,
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            onChanged: (value) async {
-                              if (value) {
-                                final service = BiometricService();
-                                final disponible = await service.isAvailable();
+          // ==========================
+          // PARTE FIJA INFERIOR
+          // ==========================
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+            decoration: BoxDecoration(
+              color: contentBg,
+              border: Border(top: BorderSide(color: dividerColor)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ==========================
+                  // BIOMETRIA
+                  // ==========================
+                  _buildSwitchTile(
+                    icon: Icons.fingerprint_rounded,
+                    title: "Acceso biométrico",
+                    subtitle: biometric ? "Activado" : "Desactivado",
+                    value: biometric,
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onChanged: (value) async {
+                      if (value) {
+                        final service = BiometricService();
+                        final disponible = await service.isAvailable();
 
-                                if (!mounted) return;
+                        if (!disponible) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Biometría no disponible"),
+                            ),
+                          );
+                          return;
+                        }
 
-                                if (!disponible) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "No hay biometría configurada en este dispositivo",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
+                        final resultado = await service.authenticate();
 
-                                final resultado = await service.authenticate();
+                        if (!resultado) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Validación biométrica fallida"),
+                            ),
+                          );
+                          return;
+                        }
 
-                                if (!mounted) return;
+                        await storage.saveBiometric(true);
 
-                                if (!resultado) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "No se pudo validar la huella",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
+                        setState(() {
+                          biometric = true;
+                        });
+                      } else {
+                        await storage.saveBiometric(false);
 
-                                await storage.saveBiometric(true);
-                                setState(() => biometric = true);
+                        setState(() {
+                          biometric = false;
+                        });
+                      }
+                    },
+                  ),
 
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Acceso biométrico activado"),
-                                  ),
-                                );
-                              } else {
-                                await storage.saveBiometric(false);
-                                setState(() => biometric = false);
+                  const SizedBox(height: 8),
 
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Acceso biométrico desactivado",
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+                  // ==========================
+                  // TEMA
+                  // ==========================
+                  _buildThemeSelector(
+                    isDark: isDark,
+                    primaryBlue: primaryBlue,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                  ),
 
-                          const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
-                          // SELECTOR DE TEMA
-                          _buildThemeSelector(
-                            isDark: isDark,
-                            primaryBlue: primaryBlue,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                          ),
-                        ],
+                  // ==========================
+                  // LOGOUT
+                  // ==========================
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.red,
+                    ),
+                    title: const Text(
+                      "Cerrar sesión",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    onTap: cerrarSesion,
+                  ),
 
-                    // 3. PIE DE PÁGINA FIJO EN LA PARTE INFERIOR
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
-                      decoration: BoxDecoration(
-                        color: contentBg,
-                        border: Border(
-                          top: BorderSide(color: dividerColor, width: 1),
+                  const SizedBox(height: 4),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_rounded,
+                        size: 18,
+                        color: primaryBlue,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "FERSAL",
+                        style: TextStyle(
+                          color: primaryBlue,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
                         ),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 6),
-                          ListTile(
-                            dense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 0,
-                            ),
-                            leading: const Icon(
-                              Icons.logout_rounded,
-                              color: Color(0xFFEF4444),
-                              size: 22,
-                            ),
-                            title: const Text(
-                              "Cerrar sesión",
-                              style: TextStyle(
-                                color: Color(0xFFEF4444),
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            onTap: cerrarSesion,
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.inventory_2_rounded,
-                                color: primaryBlue,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                "FERSAL",
-                                style: TextStyle(
-                                  color: primaryBlue,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "Versión 1.0.0",
-                            style: TextStyle(
-                              color: textSecondary,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    "Versión 1.0.0",
+                    style: TextStyle(color: textSecondary, fontSize: 11),
+                  ),
+                ],
               ),
             ),
           ),
@@ -488,51 +521,44 @@ class _FersalDrawerState extends State<FersalDrawer> {
     );
   }
 
-  // ============================================================
-  // COMPONENTES HELPER
-  // ============================================================
-
+  // ==========================================================
+  // SELECTOR DE TEMA
+  // ==========================================================
   Widget _buildThemeSelector({
     required bool isDark,
     required Color primaryBlue,
     required Color textPrimary,
     required Color textSecondary,
   }) {
-    final cardBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              Icon(Icons.palette_outlined, color: textSecondary, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                "Tema de la aplicación",
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+        Row(
+          children: [
+            Icon(Icons.palette_outlined, color: textSecondary, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              "Tema",
+              style: TextStyle(
+                color: textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12),
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: cardBg,
+            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             children: [
               _buildThemeOption(
                 label: "Claro",
-                icon: Icons.light_mode_rounded,
+                icon: Icons.light_mode,
                 option: ThemeOption.light,
                 primaryBlue: primaryBlue,
                 textSecondary: textSecondary,
@@ -540,7 +566,7 @@ class _FersalDrawerState extends State<FersalDrawer> {
               ),
               _buildThemeOption(
                 label: "Oscuro",
-                icon: Icons.dark_mode_rounded,
+                icon: Icons.dark_mode,
                 option: ThemeOption.dark,
                 primaryBlue: primaryBlue,
                 textSecondary: textSecondary,
@@ -548,7 +574,7 @@ class _FersalDrawerState extends State<FersalDrawer> {
               ),
               _buildThemeOption(
                 label: "Sistema",
-                icon: Icons.settings_suggest_rounded,
+                icon: Icons.settings_suggest,
                 option: ThemeOption.system,
                 primaryBlue: primaryBlue,
                 textSecondary: textSecondary,
@@ -569,8 +595,7 @@ class _FersalDrawerState extends State<FersalDrawer> {
     required Color textSecondary,
     required bool isDark,
   }) {
-    final isSelected = _selectedTheme == option;
-    final activeBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final selected = _selectedTheme == option;
 
     return Expanded(
       child: GestureDetector(
@@ -579,7 +604,6 @@ class _FersalDrawerState extends State<FersalDrawer> {
             _selectedTheme = option;
           });
 
-          // Notifica el cambio de tema en tiempo real a MaterialApp
           switch (option) {
             case ThemeOption.light:
               themeNotifier.value = ThemeMode.light;
@@ -592,36 +616,28 @@ class _FersalDrawerState extends State<FersalDrawer> {
               break;
           }
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+        child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? activeBg : Colors.transparent,
+            color: selected
+                ? (isDark ? const Color(0xFF1E293B) : Colors.white)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [],
           ),
           child: Column(
             children: [
               Icon(
                 icon,
                 size: 18,
-                color: isSelected ? primaryBlue : textSecondary,
+                color: selected ? primaryBlue : textSecondary,
               ),
               const SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? primaryBlue : textSecondary,
+                  color: selected ? primaryBlue : textSecondary,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ],
@@ -631,6 +647,9 @@ class _FersalDrawerState extends State<FersalDrawer> {
     );
   }
 
+  // ==========================================================
+  // ITEM MENU
+  // ==========================================================
   Widget _buildMenuItem({
     required int index,
     required IconData icon,
@@ -640,47 +659,42 @@ class _FersalDrawerState extends State<FersalDrawer> {
     required Color textPrimary,
     required Color textSecondary,
     required VoidCallback onTap,
-    bool showChevron = true,
   }) {
-    final isSelected = _selectedIndex == index;
+    final selected = _selectedIndex == index;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: isSelected
-            ? (isDark ? primaryBlue.withOpacity(0.18) : const Color(0xFFEEF4FF))
-            : Colors.transparent,
+        color: selected ? primaryBlue.withOpacity(.12) : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: ListTile(
-        dense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        leading: Icon(
-          icon,
-          color: isSelected ? primaryBlue : textSecondary,
-          size: 22,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? primaryBlue : textPrimary,
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          dense: true,
+          leading: Icon(icon, color: selected ? primaryBlue : textSecondary),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: selected ? primaryBlue : textPrimary,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
+          trailing: const Icon(Icons.chevron_right, size: 18),
+          onTap: () {
+            setState(() {
+              _selectedIndex = index;
+            });
+            onTap();
+          },
         ),
-        trailing: showChevron
-            ? Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400,
-              )
-            : null,
-        onTap: onTap,
       ),
     );
   }
 
+  // ==========================================================
+  // SWITCH TILE
+  // ==========================================================
   Widget _buildSwitchTile({
     required IconData icon,
     required String title,
@@ -694,27 +708,19 @@ class _FersalDrawerState extends State<FersalDrawer> {
   }) {
     return ListTile(
       dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      leading: Icon(icon, color: textSecondary, size: 22),
+      leading: Icon(icon, color: textSecondary),
       title: Text(
         title,
-        style: TextStyle(
-          color: textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: textPrimary, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(color: textSecondary, fontSize: 11),
+        style: TextStyle(color: textSecondary, fontSize: 12),
       ),
-      trailing: Transform.scale(
-        scale: 0.8,
-        child: Switch(
-          value: value,
-          activeColor: primaryBlue,
-          onChanged: onChanged,
-        ),
+      trailing: Switch(
+        value: value,
+        activeColor: primaryBlue,
+        onChanged: onChanged,
       ),
     );
   }
