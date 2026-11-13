@@ -16,6 +16,8 @@ dependencies:
   shared_preferences: ^2.5.5
   image_picker: ^1.1.2
   local_auth: ^2.3.0
+  biometric_signature: ^13.3.0
+  flutter_secure_storage: ^10.3.4
   intl: ^0.19.0
   firebase_core: ^3.6.0
   firebase_messaging: ^15.1.3

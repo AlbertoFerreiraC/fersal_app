@@ -1,3 +1,4 @@
+import '../../../core/security/biometric_credentials.dart';
 import '../../../core/network/api_client.dart';
 
 import '../model/login_request.dart';
@@ -19,12 +20,6 @@ class AuthApi {
   }
 
   Future<LoginResponse> biometricLogin(String email) async {
-    final response = await apiClient.client.post(
-      "/auth/biometric",
-
-      data: {"email": email},
-    );
-
-    return LoginResponse.fromJson(response.data);
+    return LoginResponse.fromJson(await BiometricCredentials().login(apiClient,email));
   }
 }

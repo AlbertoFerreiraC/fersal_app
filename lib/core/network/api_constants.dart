@@ -10,7 +10,7 @@ class ApiConstants {
   // URLs configuradas
   static const String _urlLocal = "http://10.80.2.64:8080/api";
   static const String _urlVpn = "http://100.116.228.4:8080/api";
-  static const String _urlRender = "https://fersal.onrender.com/api";
+  static const String _urlRender = "https://fersal-dev.com/fersal/api";
 
   /// Permite pasar el ambiente por línea de comandos o usar el selector por defecto:
   /// flutter run --dart-define=ENV=render

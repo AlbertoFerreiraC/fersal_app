@@ -1,6 +1,11 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:biometric_signature/biometric_signature.dart';
+import 'package:dio/dio.dart';
+import '../network/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TokenStorage {
+  static const _secure = FlutterSecureStorage(mOptions: MacOsOptions(usesDataProtectionKeychain: false));
   static const String _tokenKey = "token";
 
   static const String _usuarioIdKey = "usuario_id";
@@ -37,7 +42,13 @@ class TokenStorage {
   ) async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(_tokenKey, token);
+    if (prefs.getString(_emailKey) != email) {
+      await prefs.setBool(_biometricKey, false);
+      for (final key in ['bio_email','bio_device_id','bio_remote_id']) { await prefs.remove(key); }
+      try { await BiometricSignature().deleteKeys(keyAlias:'fersal_auth'); } catch (_) {}
+    }
+    await _secure.write(key:_tokenKey,value:token);
+    await prefs.remove(_tokenKey);
 
     await prefs.setString(_usuarioIdKey, usuarioId);
 
@@ -83,7 +94,8 @@ class TokenStorage {
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
 
-    return prefs.getString(_tokenKey);
+    await prefs.remove(_tokenKey);
+    return _secure.read(key:_tokenKey);
   }
 
   Future<String?> getEmail() async {
@@ -155,10 +167,18 @@ class TokenStorage {
   Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
 
+    await logout();
+    try { await BiometricSignature().deleteKeys(keyAlias:"fersal_auth"); } catch (_) {}
     await prefs.clear();
   }
 
-  Future<void> logout() async {
+  Future<void> logout({bool revoke = true}) async {
+    final token = await _secure.read(key:_tokenKey);
+    if (revoke && token != null) {
+      final client = Dio(BaseOptions(baseUrl:ApiConstants.baseUrl,connectTimeout:const Duration(seconds:5),receiveTimeout:const Duration(seconds:5)));
+      try { await client.post('/auth/logout',options:Options(headers:{'Authorization':'Bearer $token'})); } catch (_) {} finally { client.close(); }
+    }
+    await _secure.delete(key:_tokenKey);
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.remove(_tokenKey);

@@ -37,9 +37,9 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
+          if (error.response?.statusCode == 401 && error.requestOptions.path != '/auth/login' && error.requestOptions.headers['Authorization'] == 'Bearer ${await storage.getToken()}') {
             debugPrint("SESIÓN EXPIRADA (401) -> Cerrando sesión local");
-            await storage.logout();
+            await storage.logout(revoke: false);
           }
           handler.next(error);
         },
@@ -54,9 +54,9 @@ class ApiClient {
         LogInterceptor(
           request: true,
           requestHeader: false,
-          requestBody: true,
+          requestBody: false,
           responseHeader: false,
-          responseBody: true,
+          responseBody: false,
           error: true,
           logPrint: (object) {
             debugPrint("[HTTP] $object");

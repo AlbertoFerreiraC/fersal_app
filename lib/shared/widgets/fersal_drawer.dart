@@ -424,7 +424,7 @@ class _FersalDrawerState extends State<FersalDrawer> {
                           return;
                         }
 
-                        final resultado = await service.authenticate();
+                        final resultado = await service.enroll();
 
                         if (!resultado) {
                           if (!context.mounted) return;
@@ -442,6 +442,7 @@ class _FersalDrawerState extends State<FersalDrawer> {
                           biometric = true;
                         });
                       } else {
+                        await BiometricService().disable();
                         await storage.saveBiometric(false);
 
                         setState(() {

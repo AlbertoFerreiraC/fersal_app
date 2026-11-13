@@ -164,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     final service = BiometricService();
-    final resultado = await service.authenticate();
+    final resultado = await service.isAvailable();
 
     if (!resultado) {
       return;

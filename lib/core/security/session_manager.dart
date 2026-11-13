@@ -85,6 +85,8 @@ class _SessionManagerState extends State<SessionManager>
     final navigator = widget.navigatorKey.currentState;
 
     if (navigator == null) {
+      _cerrandoSesion = false;
+      _iniciarTemporizador();
       return;
     }
 
@@ -92,6 +94,9 @@ class _SessionManagerState extends State<SessionManager>
       MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
     );
+    _ultimaActividad = DateTime.now();
+    _cerrandoSesion = false;
+    _iniciarTemporizador();
   }
 
   @override

@@ -1,3 +1,5 @@
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
+
 buildscript {
     repositories {
         google()
@@ -26,6 +28,15 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    // Esta versión del visor fija API 31, incompatible con sus dependencias.
+    // Ajustar su SDK al de la app sin modificar el paquete en la caché de Pub.
+    if (name == "syncfusion_flutter_pdfviewer") {
+        plugins.withId("com.android.library") {
+            project.extensions.configure<LibraryAndroidComponentsExtension> {
+                finalizeDsl { library -> library.compileSdk = 36 }
+            }
+        }
+    }
     project.evaluationDependsOn(":app")
 }
 

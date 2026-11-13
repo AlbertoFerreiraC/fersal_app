@@ -1,3 +1,7 @@
+import 'package:biometric_signature/biometric_signature.dart';
+import 'biometric_credentials.dart';
+import '../network/api_client.dart';
+import '../storage/token_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
 class BiometricService {
@@ -5,16 +9,19 @@ class BiometricService {
 
   Future<bool> isAvailable() async {
     try {
-      final canCheck = await auth.canCheckBiometrics;
-
-      final supported = await auth.isDeviceSupported();
-
-      await auth.getAvailableBiometrics();
-
-      return canCheck && supported;
+      return (await BiometricSignature().biometricAuthAvailable()).canAuthenticate == true;
     } catch (e) {
       return false;
     }
+  }
+
+  Future<bool> enroll() async {
+    final api=ApiClient(storage:TokenStorage());
+    try { await BiometricCredentials().enroll(api); return true; } catch (_) { return false; } finally { api.dio.close(); }
+  }
+  Future<void> disable() async {
+    final api=ApiClient(storage:TokenStorage());
+    try { await BiometricCredentials().disable(api); } finally { api.dio.close(); }
   }
 
   Future<bool> authenticate() async {
